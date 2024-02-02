@@ -1,14 +1,52 @@
-import stacks from "../../data/stacks.json";
-import Image from "next/image";
+import stacks from "@/data/stacks.json";
+import Header from "@/components/Header";
+import Message from "@/components/Message";
+import Prompt from "@/components/Prompt";
+import { useEffect, useRef, useState } from "react";
 
 export default function Stack({ stack, stackKey }) {
+  const [messages, setMessages] = useState([]);
+  const chatRef = useRef(null);
+
+  useEffect(() => {
+    chatRef.current.scrollTo(0, chatRef.current.scrollHeight);
+  }, [messages]);
+
+  const onSubmit = (prompt) => {
+    if (prompt.trim().length === 0) {
+      return;
+    }
+
+    setMessages((messages) => {
+      return [
+        ...messages,
+        {
+          id: new Date().toISOString(),
+          author: "human",
+          avatar: "https://thrangra.sirv.com/Avatar2.png",
+          text: prompt,
+        },
+      ];
+    });
+  };
+
   return (
     <div className="h-full flex flex-col">
-      <div className="header flex bg-slate-200 p-4 rounded-2xl">
-        <div className="flex mr-4 justify-center items-center">
-          <Image src={stack.logo} width={200} height={200} alt="" />
-        </div>
-        <div className="flex font-bold text-sm">{stack.info}</div>
+      <Header logo={stack.logo} info={stack.info} />
+      <hr className="my-4" />
+      <div ref={chatRef} className="chat flex flex-col h-full overflow-scroll">
+        {messages.map((message, i) => (
+          <Message
+            key={message.id}
+            idx={i}
+            author={message.author}
+            avatar={message.avatar}
+            text={message.text}
+          />
+        ))}
+      </div>
+      <div className="flex p-4">
+        <Prompt onSubmit={onSubmit} />
       </div>
     </div>
   );
