@@ -1,6 +1,7 @@
 // import { Configuration, OpenAIApi } from "openai";
 
 import OpenAI from "openai";
+import { withNextSession } from "@/lib/session";
 
 const openai = new OpenAI();
 
@@ -8,10 +9,24 @@ const openai = new OpenAI();
 //   apiKey: process.env.OPENAI_API_KEY,
 // });
 
-export default async function completion(req, res) {
+export default withNextSession(async (req, res) => {
   if (req.method === "POST") {
     const body = req.body;
     const prompt = body.prompt || "";
+    const { user } = req.session;
+
+    // console.log("SESSION: " + req.session);
+
+    if (!user) {
+      return res
+        .status(500)
+        .json({ error: { message: "Session is missing!" } });
+    }
+
+    console.log(user.uid + " wants to get some asnwers!");
+
+    // await new Promise((res) => setTimeout(res, 500));
+    // return res.status(200).json({ result: AI_RESPONSE });
 
     // const aiResponse = "React JS is a library for creating UIs...";
     // await new Promise((res) => setTimeout(res, 500));
@@ -58,7 +73,23 @@ export default async function completion(req, res) {
       console.log(e.message);
       return res.status(500).json({ error: { message: e.message } });
     }
+  } else if (req.method === "PUT") {
+    const { uid } = req.query;
+
+    if (!uid) {
+      return res
+        .status(500)
+        .json({ error: { message: "Invalid uid provided!" } });
+    }
+
+    req.session.user = {
+      uid,
+    };
+
+    await req.session.save();
+
+    return res.status(200).json(uid);
   } else {
     return res.status(500).json({ error: { message: "Invalid Api Route" } });
   }
-}
+});
