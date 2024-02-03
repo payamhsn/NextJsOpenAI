@@ -8,10 +8,10 @@ export default function Message({ text: initialText, avatar, idx, author }) {
   useEffect(() => {
     const timeout = setTimeout(() => {
       setText(initialText.slice(0, text.length + 1));
-    }, 25);
+    }, 10);
 
     return () => clearTimeout(timeout);
-  });
+  }, [initialText, text]);
 
   const blinkingCursorClass =
     initialText.length === text.length ? "" : "blinking-cursor";
