@@ -1,7 +1,6 @@
 // import { Configuration, OpenAIApi } from "openai";
 
 import OpenAI from "openai";
-import { withNextSession } from "@/lib/session";
 
 const openai = new OpenAI();
 
@@ -9,21 +8,20 @@ const openai = new OpenAI();
 //   apiKey: process.env.OPENAI_API_KEY,
 // });
 
-export default withNextSession(async (req, res) => {
+export default async function completion(req, res) {
   if (req.method === "POST") {
     const body = req.body;
     const prompt = body.prompt || "";
-    const { user } = req.session;
 
     // console.log("SESSION: " + req.session);
 
-    if (!user) {
-      return res
-        .status(500)
-        .json({ error: { message: "Session is missing!" } });
-    }
+    // if (!user) {
+    //   return res
+    //     .status(500)
+    //     .json({ error: { message: "Session is missing!" } });
+    // }
 
-    console.log(user.uid + " wants to get some asnwers!");
+    // console.log(user.uid + " wants to get some asnwers!");
 
     // await new Promise((res) => setTimeout(res, 500));
     // return res.status(200).json({ result: AI_RESPONSE });
@@ -53,11 +51,11 @@ export default withNextSession(async (req, res) => {
       const completion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo-0125",
         messages: [
-          // {
-          //   role: "system",
-          //   content:
-          //     "you are a helpful German language teacher who can ask question based on Goethe exam. also you can chat like a real person with German language as mother tongue.You can also warn me about my faults and tell what the problem.",
-          // },
+          {
+            role: "system",
+            content:
+              "My name is Leyla and you are a helpful German language teacher who can ask question based on Goethe exam. also you can chat like a real person with German language as mother tongue.You can also warn me about my faults and tell what the problem.",
+          },
           {
             role: "user",
             content: prompt,
@@ -67,29 +65,14 @@ export default withNextSession(async (req, res) => {
       });
 
       const aiResponse = completion.choices[0].message.content;
+
       //   console.log(completion.choices[0].message.content);
       return res.status(200).json({ result: aiResponse });
     } catch (e) {
       console.log(e.message);
       return res.status(500).json({ error: { message: e.message } });
     }
-  } else if (req.method === "PUT") {
-    const { uid } = req.query;
-
-    if (!uid) {
-      return res
-        .status(500)
-        .json({ error: { message: "Invalid uid provided!" } });
-    }
-
-    req.session.user = {
-      uid,
-    };
-
-    await req.session.save();
-
-    return res.status(200).json(uid);
   } else {
     return res.status(500).json({ error: { message: "Invalid Api Route" } });
   }
-});
+}
